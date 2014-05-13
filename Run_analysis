@@ -1,0 +1,95 @@
+# You should create one R script called run_analysis.R that does the following. 
+
+setwd("/Users/vanessaluong/Dropbox/Coursera/Cleaning data//project")
+#################################################################################
+# TASK 1: Merges the training and the test sets to create one data set.
+#################################################################################
+# Merge training set
+X_train = read.table("UCI HAR Dataset/train/X_train.txt") 
+Y_train = read.table("UCI HAR Dataset/train/Y_train.txt") 
+
+subject_train = read.table("UCI HAR Dataset/train/subject_train.txt") 
+
+colnames(X_train)
+colnames(Y_train) = "Activity"
+colnames(subject_train) = "Subject"
+
+train = data.frame(subject_train,Y_train,X_train,stringsAsFactors=F)
+
+# Merge testing set
+X_test = read.table("UCI HAR Dataset/test/X_test.txt") 
+Y_test = read.table("UCI HAR Dataset/test/y_test.txt") 
+
+subject_test = read.table("UCI HAR Dataset/test/subject_test.txt") 
+
+colnames(Y_test) = "Activity"
+colnames(subject_test) = "Subject"
+
+test = data.frame(subject_test,Y_test,X_test,stringsAsFactors=F)
+
+# Merge training set and testing set
+full_data = rbind(train,test)
+
+# Rename full_data
+feature_name = read.table("UCI HAR Dataset/features.txt")
+feature_name = as.character(feature_name$V2)
+colnames(full_data) = c("Subject","Activity",feature_name)
+
+
+
+#################################################################################
+# TASK 2: Extracts only the measurements on the mean and standard deviation for each measurement. 
+#################################################################################
+temp = rep(0, length(feature_name))
+index1 = grep("mean()", feature_name)
+temp[index1] = "1"
+
+index2 = grep("std()", feature_name)
+temp[index2] = "2"
+
+table(temp)
+
+select_var = which(temp > 0) + 2
+
+data = full_data[,c(1,2,select_var)]
+
+#################################################################################
+# TASK 3: Uses descriptive activity names to name the activities in the data set
+#################################################################################
+# Revalue activity label
+library(plyr)
+data$Activity = factor(data$Activity)
+data$Activity = revalue(data$Activity, c("1" = "WALKING", 
+                                                   "2" = "WALKING_UPSTAIRS",
+                                                   "3" = "WALKING_DOWNSTAIRS",
+                                                   "4" = "SITTING",
+                                                   "5" = "STANDING",
+                                                   "6" = "LAYING"))
+
+#################################################################################
+# TASK 4: Appropriately labels the data set with descriptive activity names. 
+#################################################################################
+var_names = colnames(data)
+var_names = gsub("[[:punct:]]", "", var_names)
+var_names = gsub("Acc", "Acceleration", var_names)
+var_names = gsub("mean", "Mean", var_names)
+var_names = gsub("std", "StandardDeviation", var_names)
+
+
+colnames(data) = var_names
+
+save(data,file="data.rda")
+
+#################################################################################
+# TASK 5: Creates a second, independent tidy data set with the average of each 
+# variable for each activity and each subject. 
+#################################################################################
+data$Subject = factor(data$Subject)
+
+final_data = aggregate(. ~ Activity:Subject, data = data, FUN = mean)
+
+save(final_data, file = "final_data.rda")
+write.csv(final_data,file = "final_data.csv")
+write.table(final_data, "final_data.txt", sep="\t")
+
+

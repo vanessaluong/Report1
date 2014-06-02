@@ -1,6 +1,6 @@
 # You should create one R script called run_analysis.R that does the following. 
 
-setwd("/Users/vanessaluong/Dropbox/Coursera/Cleaning data//project")
+setwd("...")
 #################################################################################
 # TASK 1: Merges the training and the test sets to create one data set.
 #################################################################################
